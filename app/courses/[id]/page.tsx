@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Course, CourseModule, Lecture } from '../../../types';
 import { api } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
+import { createCourseOrder, loadRazorpayScript, openRazorpayCheckout } from '../../../services/razorpayCheckout';
 import {
   Clock,
   BookOpen,
@@ -71,19 +72,6 @@ export default function CourseDetailsPage() {
     setOpenModuleIds((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const loadRazorpayScript = (): Promise<boolean> => {
-    return new Promise((resolve) => {
-      if (typeof window === 'undefined') return resolve(false);
-      if ((window as any).Razorpay) return resolve(true);
-
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  };
-
   const handleEnroll = async () => {
     if (!user) {
       router.push('/login');
@@ -107,14 +95,12 @@ export default function CourseDetailsPage() {
         setEnrolling(false);
       } else {
         // Paid course -> Create Order & Open Razorpay Checkout Modal
-        const orderRes = await api.post('/payments/create-order', { courseId });
-        if (!orderRes.data.success || !orderRes.data.data) {
+        const order = await createCourseOrder(courseId);
+        if (!order) {
           alert('Failed to create Razorpay order. Please try again.');
           setEnrolling(false);
           return;
         }
-
-        const order = orderRes.data.data;
 
         // Ensure Razorpay Checkout SDK is loaded
         const isScriptLoaded = await loadRazorpayScript();
@@ -124,55 +110,33 @@ export default function CourseDetailsPage() {
           return;
         }
 
-        const options = {
-          key: order.razorpay_key,
-          amount: Math.round(order.amount * 100),
-          currency: order.currency || 'INR',
-          name: 'ECU FORGE MASTERCLASS',
+        openRazorpayCheckout({
+          order,
+          courseId,
           description: course?.title || 'Masterclass Access Fee',
-          order_id: order.razorpay_order_id,
-          handler: async function (response: any) {
-            try {
-              const verifyRes = await api.post('/payments/verify-signature', {
-                courseId,
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              });
-
-              if (verifyRes.data.success) {
-                setIsEnrolled(true);
-                router.push(`/learn/${courseId}`);
-              } else {
-                alert('Payment verification failed. Please contact support if amount was deducted.');
-              }
-            } catch (err: any) {
-              alert(err.response?.data?.message || 'Payment verification failed');
-            } finally {
-              setEnrolling(false);
-            }
-          },
           prefill: {
             name: user?.full_name || '',
             email: user?.email || '',
           },
-          theme: {
-            color: '#00FF66',
-          },
-          modal: {
-            ondismiss: function () {
+          callbacks: {
+            onVerified: () => {
+              setIsEnrolled(true);
+              router.push(`/learn/${courseId}`);
+              setEnrolling(false);
+            },
+            onVerificationFailed: (message) => {
+              alert(message);
+              setEnrolling(false);
+            },
+            onPaymentFailed: (description) => {
+              alert(`Payment Failed: ${description}`);
+              setEnrolling(false);
+            },
+            onDismiss: () => {
               setEnrolling(false);
             },
           },
-        };
-
-        const rzp = new (window as any).Razorpay(options);
-        rzp.on('payment.failed', function (response: any) {
-          alert(`Payment Failed: ${response.error?.description || 'Transaction declined'}`);
-          setEnrolling(false);
         });
-
-        rzp.open();
       }
     } catch (err: any) {
       alert(err.response?.data?.message || 'Enrollment request failed');
