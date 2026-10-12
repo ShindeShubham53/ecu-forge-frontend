@@ -8,12 +8,27 @@ import { User } from '../../../types';
 import { api } from '../../../services/api';
 import { Users, Search, ShieldCheck, UserX, UserCheck, ChevronLeft } from 'lucide-react';
 
+const SEARCH_KEY = 'ecu_admin_user_search';
+
 export default function AdminUserManagementPage() {
   const router = useRouter();
   const { user, isAdmin, loading: authLoading } = useAuth();
   const [usersList, setUsersList] = useState<User[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+
+  // Keep the search when returning from a learner's details page (per-tab only; never in the URL).
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(SEARCH_KEY);
+      if (saved) setSearch(saved);
+    } catch {}
+  }, []);
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(SEARCH_KEY, search);
+    } catch {}
+  }, [search]);
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
@@ -98,7 +113,14 @@ export default function AdminUserManagementPage() {
                   <div className="w-7 h-7 rounded-full bg-brand-green/20 text-brand-green flex items-center justify-center font-bold text-xs">
                     {u.full_name?.charAt(0)}
                   </div>
-                  {u.full_name}
+                  <Link
+                    href={`/admin/users/${encodeURIComponent(u.id)}`}
+                    className="hover:text-brand-green hover:underline underline-offset-2"
+                    title="View learner activity"
+                    data-testid="user-details-link"
+                  >
+                    {u.full_name}
+                  </Link>
                 </td>
                 <td className="p-4 text-brand-silver">{u.email}</td>
                 <td className="p-4">

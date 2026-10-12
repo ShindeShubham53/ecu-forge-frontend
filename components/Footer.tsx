@@ -96,11 +96,20 @@ export const Footer: React.FC = () => {
         {/* Bottom Bar */}
         <div className="border-t border-brand-border/60 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-brand-silver/60">
           <p>© {new Date().getFullYear()} ECU FORGE MASTERCLASS. Powered by MECH-MOTO. All rights reserved.</p>
-          <div className="flex gap-6 mt-4 sm:mt-0">
-            <span className="hover:text-brand-green cursor-pointer">Privacy Policy</span>
-            <span className="hover:text-brand-green cursor-pointer">Terms of Service</span>
-            <span className="hover:text-brand-green cursor-pointer">Security Spec</span>
-          </div>
+          <nav aria-label="Legal" className="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-4 sm:mt-0">
+            <Link href="/privacy" className="hover:text-brand-green transition-colors">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="hover:text-brand-green transition-colors">
+              Terms &amp; Conditions
+            </Link>
+            <Link href="/refund-policy" className="hover:text-brand-green transition-colors">
+              Refund Policy
+            </Link>
+            <Link href="/delete-account" className="hover:text-brand-green transition-colors">
+              Delete Account
+            </Link>
+          </nav>
         </div>
       </div>
     </footer>

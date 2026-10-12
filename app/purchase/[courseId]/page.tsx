@@ -417,6 +417,12 @@ function PurchasePageInner() {
                 </>
               )}
             </button>
+            <p className="text-[11px] text-brand-silver text-center" data-testid="purchase-policies">
+              By paying you agree to our{' '}
+              <Link href="/terms" className="underline hover:text-brand-green">Terms &amp; Conditions</Link> and{' '}
+              <Link href="/refund-policy" className="underline hover:text-brand-green">Refund Policy</Link>. See our{' '}
+              <Link href="/privacy" className="underline hover:text-brand-green">Privacy Policy</Link>.
+            </p>
           </div>
         );
     }

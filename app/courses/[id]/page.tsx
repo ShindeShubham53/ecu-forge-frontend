@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Course, CourseModule, Lecture } from '../../../types';
 import { api } from '../../../services/api';
@@ -256,6 +257,13 @@ export default function CourseDetailsPage() {
                   </>
                 )}
               </button>
+              {!isEnrolled && course.price > 0 && (
+                <p className="text-[11px] text-brand-silver/80 text-center" data-testid="course-policies">
+                  By purchasing you agree to our{' '}
+                  <Link href="/terms" className="underline hover:text-brand-green">Terms &amp; Conditions</Link> and{' '}
+                  <Link href="/refund-policy" className="underline hover:text-brand-green">Refund Policy</Link>.
+                </p>
+              )}
 
               <div className="space-y-2 text-xs font-mono text-brand-silver/80">
                 <div className="flex items-center gap-2">

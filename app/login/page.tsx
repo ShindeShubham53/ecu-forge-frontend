@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { BrandLogo } from '../../components/BrandLogo';
+import { safeNextPath } from '../../services/safeNext';
 import { Lock, Mail, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
@@ -23,7 +24,9 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      router.push('/dashboard');
+      // Optional same-site return path (e.g. /login?next=/delete-account); default stays /dashboard.
+      const next = safeNextPath(new URLSearchParams(window.location.search).get('next'));
+      router.push(next ?? '/dashboard');
     } catch (err: any) {
       setError(err.message || 'Invalid email or password');
     } finally {
